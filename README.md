@@ -135,3 +135,51 @@ npm run web
 - Add backend API + database (gigs, users, assignments, payouts).
 - Add payment/escrow flow.
 - Add chat, ratings, and dispute handling.
+
+
+## MongoDB backend (new)
+
+A Node + Express + MongoDB backend is now included in `server/`.
+
+### 1) Install deps
+
+```bash
+npm install
+```
+
+### 2) Start MongoDB locally
+
+Default connection is local Mongo:
+
+```bash
+mongodb://127.0.0.1:27017/gigmobi
+```
+
+### 3) Configure backend env
+
+```bash
+cp server/.env.example server/.env
+```
+
+You can keep localhost for now, and later switch to Atlas by changing `MONGODB_URI`.
+
+### 4) Run backend
+
+```bash
+npm run server
+```
+
+Backend runs on `http://localhost:4000`.
+
+### 5) Connect mobile app to backend
+
+For Android emulator, Expo should call host machine backend with `10.0.2.2`.
+
+Set env before running Expo:
+
+```bash
+export EXPO_PUBLIC_API_URL=http://10.0.2.2:4000
+npm run android
+```
+
+If using a real phone, use your laptop IP instead of `10.0.2.2`.

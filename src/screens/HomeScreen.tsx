@@ -6,7 +6,7 @@ import { Gig } from '../types';
 
 type HomeScreenProps = {
   gigs: Gig[];
-  onTakeGig: (id: string) => void;
+  onTakeGig: (id: string) => Promise<boolean>;
 };
 
 export function HomeScreen({ gigs, onTakeGig }: HomeScreenProps) {
@@ -21,9 +21,11 @@ export function HomeScreen({ gigs, onTakeGig }: HomeScreenProps) {
         renderItem={({ item }) => (
           <GigCard
             gig={item}
-            onTakeGig={(id) => {
-              onTakeGig(id);
-              Alert.alert('Gig accepted', 'This gig has moved to In Progress.');
+            onTakeGig={async (id) => {
+              const success = await onTakeGig(id);
+              if (success) {
+                Alert.alert('Gig accepted', 'This gig has moved to In Progress.');
+              }
             }}
           />
         )}

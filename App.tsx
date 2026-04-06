@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
+import { createGig as createGigRequest, fetchGigs, takeGig as takeGigRequest } from './src/api';
 import { mockGigs } from './src/data/mockGigs';
 import { CreateGigScreen } from './src/screens/CreateGigScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -13,33 +14,52 @@ type Tab = 'home' | 'create' | 'wallet';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('home');
-  const [gigs, setGigs] = useState<Gig[]>(mockGigs);
+  const [gigs, setGigs] = useState<Gig[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const openCount = useMemo(() => gigs.filter((gig) => gig.status === 'Open').length, [gigs]);
 
-  const takeGig = (id: string) => {
-    setGigs((prev) => prev.map((gig) => (gig.id === id ? { ...gig, status: 'In Progress' } : gig)));
+  const loadGigs = useCallback(async () => {
+    try {
+      const data = await fetchGigs();
+      setGigs(data);
+    } catch {
+      setGigs(mockGigs);
+      Alert.alert('Using offline data', 'Could not reach backend. Started with local sample gigs.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadGigs();
+  }, [loadGigs]);
+
+  const takeGig = async (id: string) => {
+    try {
+      const updated = await takeGigRequest(id);
+      setGigs((prev) => prev.map((gig) => (gig.id === id ? updated : gig)));
+      return true;
+    } catch {
+      Alert.alert('Action failed', 'Could not update gig status on backend.');
+      return false;
+    }
   };
 
-  const createGig = (payload: {
+  const createGig = async (payload: {
     title: string;
     description: string;
     budget: number;
     city: string;
     category: GigCategory;
   }) => {
-    const newGig: Gig = {
-      id: `g${Date.now()}`,
-      title: payload.title,
-      description: payload.description,
-      budget: payload.budget,
-      city: payload.city,
-      category: payload.category,
-      status: 'Open'
-    };
-
-    setGigs((prev) => [newGig, ...prev]);
-    setActiveTab('home');
+    try {
+      const created = await createGigRequest(payload);
+      setGigs((prev) => [created, ...prev]);
+      setActiveTab('home');
+    } catch {
+      Alert.alert('Action failed', 'Could not create gig on backend.');
+    }
   };
 
   return (
@@ -51,9 +71,15 @@ export default function App() {
       </View>
 
       <View style={styles.content}>
-        {activeTab === 'home' && <HomeScreen gigs={gigs} onTakeGig={takeGig} />}
-        {activeTab === 'create' && <CreateGigScreen onCreateGig={createGig} />}
-        {activeTab === 'wallet' && <WalletScreen gigs={gigs} />}
+        {isLoading ? (
+          <View style={styles.loaderWrap}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.loadingText}>Loading gigs...</Text>
+          </View>
+        ) : null}
+        {!isLoading && activeTab === 'home' && <HomeScreen gigs={gigs} onTakeGig={takeGig} />}
+        {!isLoading && activeTab === 'create' && <CreateGigScreen onCreateGig={createGig} />}
+        {!isLoading && activeTab === 'wallet' && <WalletScreen gigs={gigs} />}
       </View>
 
       <View style={styles.tabBar}>
@@ -103,6 +129,15 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1
+  },
+  loaderWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10
+  },
+  loadingText: {
+    color: colors.muted
   },
   tabBar: {
     flexDirection: 'row',

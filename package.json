@@ -11,17 +11,22 @@
     "typecheck": "tsc --noEmit",
     "android:clear": "expo start --android -c",
     "build:android:preview": "eas build --platform android --profile preview",
-    "build:android:production": "eas build --platform android --profile production"
+    "build:android:production": "eas build --platform android --profile production",
+    "server": "node server/index.js"
   },
   "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
     "expo": "~53.0.9",
     "expo-status-bar": "~2.2.3",
+    "express": "^5.1.0",
+    "mongoose": "^8.19.2",
     "react": "19.0.0",
     "react-native": "0.79.2"
   },
   "devDependencies": {
     "@types/react": "~19.0.10",
-    "typescript": "~5.8.3",
-    "eas-cli": "^16.7.0"
+    "eas-cli": "^16.7.0",
+    "typescript": "~5.8.3"
   }
 }
